@@ -30,4 +30,94 @@ C++, Unity
 
 **주요 코드**
 
+플레이어 이동 관련 코드입니다.
+
+```c++
+//슬라이딩 액션
+ if (Input.GetKeyDown(KeyCode.Z) && !isSliding && isGrounded && !isAttacking)
+{
+    isSliding = true;
+    animator.SetTrigger("Sliding");
+    
+    maxSpeed = slideSpeed;
+    rb.AddForce(new Vector2(ViewDirection , 0) * slideSpeed, ForceMode2D.Impulse);
+}
+    
+
+//점프 액션
+if (Input.GetKeyDown(KeyCode.C) && !isJumping && !isSliding && isGrounded && jumpCount == 0)
+{
+    isJumping = true;
+    animator.SetBool("IsJumping",true);
+    rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+}
+
+//더블 점프
+if (Input.GetKeyUp(KeyCode.C) && !isSliding && jumpCount == 0)
+{
+    jumpCount++;
+}
+
+if (Input.GetKeyDown(KeyCode.C) && !isSliding && jumpCount == 1)
+{
+    jumpCount++;
+
+    rb.velocity = Vector3.zero;
+    rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+}
+```
+
+보스 공격 관련 코드입니다.
+
+```c++
+//플레이어 방향으로 이동
+if (!isAttacking && Vector2.Distance(transform.position, player.position) > attackRange)
+{
+    Vector2 direction = (player.position - transform.position).normalized;
+    transform.Translate(direction * moveSpeed * Time.deltaTime);
+
+    isWalking = true;
+    animator.SetBool("IsWalking", isWalking);
+    
+}
+
+//공격 사거리에 들어왔으면 코루틴 실행
+else if (!isAttackingCoroutine && Vector2.Distance(transform.position, player.position) <= attackRange)
+{
+    StartCoroutine(AttackSequence());
+}
+
+//걷는 에니메이션 중지
+else if (Vector2.Distance(transform.position, player.position) <= attackRange)
+{
+    isWalking = false;
+    animator.SetBool("IsWalking", isWalking);
+}
+
+//보스가 일정 시간마다 공격할 수 있도록 하는 코루틴
+IEnumerator AttackSequence()
+{
+    isAttackingCoroutine = true;
+
+    Attack();
+
+    yield return new WaitForSeconds(attackCooldown);
+
+    isAttackingCoroutine = false;
+}
+
+//보스 공격 함수
+void Attack()
+{
+    isWalking = false;
+    isAttacking = true;
+    animator.SetBool("IsWalking", isWalking);
+
+    int randomIndex = Random.Range(0, animationNames.Length);
+    string randomAnimation = animationNames[randomIndex];
+    animator.SetTrigger(randomAnimation);
+}
+
+```
+
 --------------------------------------------------------
